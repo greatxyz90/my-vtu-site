@@ -1,0 +1,166 @@
+<script type="module">
+import { auth, db } from "./firebase.js";
+import { signOut, onAuthStateChanged } 
+  from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+import {
+  doc, getDoc, updateDoc, increment,
+  collection, addDoc, getDocs, query, orderBy, limit, where
+} from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+const logoutBtn = document.getElementById("logoutBtn");
+const fundBtn = document.getElementById("fundBtn");
+const airtimeBtn = document.getElementById("airtimeBtn");
+const sendBtn = document.getElementById("sendBtn");
+const balanceEl = document.getElementById("balance");
+const welcomeText = document.getElementById("welcomeText");
+const historyEl = document.getElementById("history");
+const amountInput = document.getElementById("amountInput");
+const receiverEmail = document.getElementById("receiverEmail");
+
+let currentUser;
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "index.html";
+  } else {
+    currentUser = user;
+    welcomeText.textContent = "Welcome " + user.email;
+    loadBalance();
+    loadHistory();
+  }
+});
+
+// Load Wallet Balance
+async function loadBalance() {
+  const docRef = doc(db, "users", currentUser.uid);
+  const docSnap = await getDoc(docRef);
+  if (docSnap.exists()) {
+    balanceEl.textContent = "₦" + docSnap.data().balance;
+  }
+}
+
+// Load last 5 transactions
+async function loadHistory() {
+  historyEl.innerHTML = "";
+  const q = query(
+    collection(db, "users", currentUser.uid, "transactions"),
+    orderBy("date", "desc"),
+    limit(5) // only last 5 transactions
+  );
+  const querySnapshot = await getDocs(q);
+  querySnapshot.forEach((docSnap) => {
+    const data = docSnap.data();
+    const div = document.createElement("div");
+
+    let color = "black";
+    let label = "";
+
+    if (data.type === "Funding") {
+      color = "green";
+      label = "Added";
+    } else if (data.type === "Airtime Purchase") {
+      color = "red";
+      label = "Bought Airtime";
+    } else if (data.type === "Sent Money") {
+      color = "red";
+      label = "Sent To";
+    } else if (data.type === "Received Money") {
+      color = "green";
+      label = "Received From";
+    }
+
+    const date = new Date(data.date.seconds * 1000).toLocaleString();
+    div.style.padding = "8px";
+    div.style.borderBottom = "1px solid #ddd";
+    div.style.color = color;
+
+    if (data.type === "Sent Money" || data.type === "Received Money") {
+      div.textContent = `${label} ${data.otherUser || "user"}: ₦${data.amount} | ${date}`;
+    } else {
+      div.textContent = `${label}: ₦${data.amount} | ${date}`;
+    }
+
+    historyEl.appendChild(div);
+  });
+}
+
+// FUND WALLET
+fundBtn.addEventListener("click", async () => {
+  const amount = parseInt(amountInput.value);
+  if (!amount || amount <= 0) { alert("Enter valid amount"); return; }
+
+  const userDoc = doc(db, "users", currentUser.uid);
+  await updateDoc(userDoc, { balance: increment(amount) });
+  await addDoc(collection(db, "users", currentUser.uid, "transactions"), {
+    type: "Funding", amount: amount, date: new Date()
+  });
+
+  amountInput.value = "";
+  loadBalance();
+  loadHistory();
+});
+
+// AIRTIME PURCHASE
+airtimeBtn.addEventListener("click", async () => {
+  const amount = parseInt(amountInput.value);
+  if (!amount || amount <= 0) { alert("Enter valid amount"); return; }
+
+  const userDoc = doc(db, "users", currentUser.uid);
+  const docSnap = await getDoc(userDoc);
+  if (docSnap.data().balance < amount) { alert("Insufficient balance"); return; }
+
+  await updateDoc(userDoc, { balance: increment(-amount) });
+  await addDoc(collection(db, "users", currentUser.uid, "transactions"), {
+    type: "Airtime Purchase", amount: amount, date: new Date()
+  });
+
+  amountInput.value = "";
+  loadBalance();
+  loadHistory();
+});
+
+// SEND MONEY
+sendBtn.addEventListener("click", async () => {
+  const amount = parseInt(amountInput.value);
+  const email = receiverEmail.value.trim();
+  if (!amount || amount <= 0) { alert("Enter valid amount"); return; }
+  if (!email) { alert("Enter receiver email"); return; }
+  if (email === currentUser.email) { alert("Cannot send to yourself"); return; }
+
+  const usersRef = collection(db, "users");
+  const q = query(usersRef, where("email", "==", email));
+  const querySnapshot = await getDocs(q);
+  if (querySnapshot.empty) { alert("Receiver not found"); return; }
+
+  const receiverDoc = querySnapshot.docs[0];
+  const receiverUID = receiverDoc.id;
+
+  const senderDoc = doc(db, "users", currentUser.uid);
+  const senderSnap = await getDoc(senderDoc);
+  if (senderSnap.data().balance < amount) { alert("Insufficient balance"); return; }
+
+  // Deduct sender
+  await updateDoc(senderDoc, { balance: increment(-amount) });
+  await addDoc(collection(db, "users", currentUser.uid, "transactions"), {
+    type: "Sent Money", amount: amount, date: new Date(), otherUser: email
+  });
+
+  // Add to receiver
+  const receiverDocRef = doc(db, "users", receiverUID);
+  await updateDoc(receiverDocRef, { balance: increment(amount) });
+  await addDoc(collection(db, "users", receiverUID, "transactions"), {
+    type: "Received Money", amount: amount, date: new Date(), otherUser: currentUser.email
+  });
+
+  amountInput.value = "";
+  receiverEmail.value = "";
+  loadBalance();
+  loadHistory();
+  alert(`₦${amount} sent to ${email}`);
+});
+
+// LOGOUT
+logoutBtn.addEventListener("click", () => {
+  signOut(auth).then(() => { window.location.href = "index.html"; });
+});
+</script>

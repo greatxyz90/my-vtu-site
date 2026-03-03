@@ -1,0 +1,73 @@
+🔹 Starting deployment at Thu Feb 26 00:15:00 WAT 2026
+
+=== Deploying to 'glory90-85e7c'...
+
+i  deploying hosting
+i  hosting[glory90-85e7c]: beginning deploy...
+i  hosting[glory90-85e7c]: found 6 files in public
+✔  hosting[glory90-85e7c]: file upload complete
+i  hosting[glory90-85e7c]: finalizing version...
+✔  hosting[glory90-85e7c]: version finalized
+i  hosting[glory90-85e7c]: releasing new version...
+✔  hosting[glory90-85e7c]: release complete
+
+✔  Deploy complete!
+
+Project Console: https://console.firebase.google.com/project/glory90-85e7c/overview
+Hosting URL: https://glory90-85e7c.web.app
+✅ Deployment finished at Thu Feb 26 00:15:43 WAT 2026! Your site is live at https://glory90-85e7c.web.app
+🔹 Starting deployment at Thu Feb 26 06:16:01 WAT 2026
+
+=== Deploying to 'glory90-85e7c'...
+
+i  deploying hosting
+i  hosting[glory90-85e7c]: beginning deploy...
+i  hosting[glory90-85e7c]: found 10 files in public
+✔  hosting[glory90-85e7c]: file upload complete
+i  hosting[glory90-85e7c]: finalizing version...
+✔  hosting[glory90-85e7c]: version finalized
+i  hosting[glory90-85e7c]: releasing new version...
+✔  hosting[glory90-85e7c]: release complete
+
+✔  Deploy complete!
+
+Project Console: https://console.firebase.google.com/project/glory90-85e7c/overview
+Hosting URL: https://glory90-85e7c.web.app
+✅ Deployment finished at Thu Feb 26 06:16:33 WAT 2026! Your site is live at https://glory90-85e7c.web.app
+🔹 Starting deployment at Thu Feb 26 06:19:17 WAT 2026
+
+=== Deploying to 'glory90-85e7c'...
+
+i  deploying hosting
+i  hosting[glory90-85e7c]: beginning deploy...
+i  hosting[glory90-85e7c]: found 10 files in public
+✔  hosting[glory90-85e7c]: file upload complete
+i  hosting[glory90-85e7c]: finalizing version...
+✔  hosting[glory90-85e7c]: version finalized
+i  hosting[glory90-85e7c]: releasing new version...
+✔  hosting[glory90-85e7c]: release complete
+
+✔  Deploy complete!
+
+Project Console: https://console.firebase.google.com/project/glory90-85e7c/overview
+Hosting URL: https://glory90-85e7c.web.app
+✅ Deployment finished at Thu Feb 26 06:19:48 WAT 2026! Your site is live at https://glory90-85e7c.web.app
+🔹 Starting deployment at Thu Feb 26 06:27:43 WAT 2026
+
+=== Deploying to 'glory90-85e7c'...
+
+i  deploying hosting
+i  hosting[glory90-85e7c]: beginning deploy...
+i  hosting[glory90-85e7c]: found 10 files in public
+✔  hosting[glory90-85e7c]: file upload complete
+i  hosting[glory90-85e7c]: finalizing version...
+✔  hosting[glory90-85e7c]: version finalized
+i  hosting[glory90-85e7c]: releasing new version...
+✔  hosting[glory90-85e7c]: release complete
+
+✔  Deploy complete!
+
+Project Console: https://console.firebase.google.com/project/glory90-85e7c/overview
+Hosting URL: https://glory90-85e7c.web.app
+✅ Deployment finished at Thu Feb 26 06:28:14 WAT 2026! Your site is live at https://glory90-85e7c.web.app
+🔹 Starting deployment at Thu Feb 26 06:33:34 WAT 2026

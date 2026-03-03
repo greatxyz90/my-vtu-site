@@ -1,0 +1,64 @@
+<!DOCTY
+PE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Verification</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>Email Verification</h1>
+
+<p id="status-text">Checking verification status...</p>
+<button id="check-verification">Refresh Status</button>
+<button id="resend-email">Resend Verification Email</button>
+<button id="logout">Logout</button>
+
+<script type="module">
+import { auth, sendEmailVerification, signOut } from './firebase-module.js';
+
+// Check verification
+async function checkStatus() {
+  if (!auth.currentUser) {
+    alert("Please login first!");
+    window.location.href = "index.html";
+    return;
+  }
+  await auth.currentUser.reload(); // refresh user state
+  if (auth.currentUser.emailVerified) {
+    document.getElementById("status-text").textContent = "✅ Your email is verified!";
+    setTimeout(() => {
+      window.location.href = "dashboard.html";
+    }, 2000);
+  } else {
+    document.getElementById("status-text").textContent = "❌ Your email is not verified yet.";
+  }
+}
+
+// Refresh button
+document.getElementById("check-verification").addEventListener("click", checkStatus);
+
+// Resend verification email
+document.getElementById("resend-email").addEventListener("click", async () => {
+  try {
+    await sendEmailVerification(auth.currentUser);
+    alert("Verification email resent!");
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+});
+
+// Logout button
+document.getElementById("logout").addEventListener("click", async () => {
+  await signOut(auth);
+  window.location.href = "index.html";
+});
+
+// Initial check on page load
+checkStatus();
+</script>
+
+</body>
+</html>

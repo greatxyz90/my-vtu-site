@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Glory VTU Dashboard</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <h1>Welcome 👋</h1>
+  <p id="walletBalance">Wallet Balance: ₦0</p>
+
+  <div id="buttons">
+    <button id="btnFund">Fund Wallet</button>
+    <button id="btnAirtime">Buy Airtime</button>
+    <button id="btnData">Buy Data</button>
+    <button id="btnSend">Send Money</button>
+    <button id="btnResendVerification">Resend Verification Email</button>
+    <button id="logoutBtn">Logout</button>
+  </div>
+
+  <p id="output"></p>
+</div>
+
+<script type="module">
+import { updateWallet, logout, resendVerification } from './firebase-module.js';
+
+// Buttons automatically use the logged-in UID
+document.getElementById("btnSend").addEventListener("click", () => updateWallet(100, "Send"));
+document.getElementById("btnFund").addEventListener("click", () => updateWallet(500, "Fund"));
+document.getElementById("btnAirtime").addEventListener("click", () => updateWallet(200, "Airtime"));
+document.getElementById("btnData").addEventListener("click", () => updateWallet(300, "Data"));
+document.getElementById("btnResendVerification").addEventListener("click", resendVerification);
+document.getElementById("logoutBtn").addEventListener("click", logout);
+</script>
+</body>
+</html>

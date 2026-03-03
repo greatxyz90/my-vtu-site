@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Email Verification - Glory VTU</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h1>Verify Your Email</h1>
+<p id="message">A verification email has been sent. Please check your inbox.</p>
+<button id="resendBtn">Resend Verification Email</button>
+<button id="checkBtn">I Have Verified</button>
+<script type="module">
+import { auth } from ./firebase.js;
+import { sendEmailVerification, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+
+let currentUser;
+onAuthStateChanged(auth,user=>{
+  if(!user) window.location.href="index.html";
+  else{
+    currentUser=user;
+    if(!user.emailVerified){ sendEmailVerification(user); }
+    else{ window.location.href="dashboard.html"; }
+  }
+});
+
+document.getElementById("resendBtn").addEventListener("click", async ()=>{
+  if(currentUser){ await sendEmailVerification(currentUser); alert("✅ Verification email resent!"); }
+});
+
+document.getElementById("checkBtn").addEventListener("click", async ()=>{
+  await currentUser.reload();
+  if(currentUser.emailVerified){ alert("✅ Verified! Redirecting..."); window.location.href="dashboard.html"; }
+  else{ alert("❌ Email still not verified."); }
+});
+</script>
+</body>
+</html>

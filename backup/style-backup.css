@@ -1,0 +1,5 @@
+body { font-family: Arial, sans-serif; text-align:center; background:#f4f4f4; padding:20px; }
+h1 { color:#007bff; }
+input, button { padding:10px; font-size:16px; margin:5px; }
+button { cursor:pointer; }
+#history div { border-bottom:1px solid #ddd; padding:5px; }

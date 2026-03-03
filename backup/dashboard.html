@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Glory VTU Dashboard</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h1 id="welcomeText">Welcome 👋</h1>
+<p id="verifyNotice" style="color:red;display:none;">❌ Your email is not verified. Please check your inbox.</p>
+<p><strong>Wallet Balance:</strong> <span id="balance">₦0</span></p>
+<input type="number" id="amountInput" placeholder="Enter Amount">
+<input type="email" id="receiverEmail" placeholder="Receiver Email"><br>
+<button id="fundBtn">Fund Wallet</button>
+<button id="airtimeBtn">Buy Airtime</button>
+<button id="dataBtn">Buy Data</button>
+<button id="sendBtn">Send Money</button>
+<button id="resendVerifyBtn">Resend Verification Email</button>
+<button id="logoutBtn">Logout</button>
+<h2>Last Transactions</h2>
+<div id="history"></div>
+<script type="module">
+import { auth, db } from "./firebase.js";
+import { onAuthStateChanged, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+import { doc, getDoc, updateDoc, increment, collection, addDoc, getDocs, query, orderBy, limit, where } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+let currentUser;
+const balanceEl=document.getElementById("balance");
+const welcomeText=document.getElementById("welcomeText");
+const historyEl=document.getElementById("history");
+const amountInput=document.getElementById("amountInput");
+const receiverEmail=document.getElementById("receiverEmail");
+
+onAuthStateChanged(auth,async(user)=>{
+  if(!user) window.location.href="index.html";
+  else{
+    currentUser=user;
+    welcomeText.textContent="Welcome "+user.email;
+    document.getElementById("verifyNotice").style.display = user.emailVerified ? "none" : "block";
+    loadBalance(); loadHistory();
+  }
+});
+
+async function loadBalance(){
+  const docSnap=await getDoc(doc(db,"users",currentUser.uid));
+  if(docSnap.exists()) balanceEl.textContent="₦"+docSnap.data().balance;
+}
+
+async function loadHistory(){
+  historyEl.innerHTML="";
+  const q=query(collection(db,"users",currentUser.uid,"transactions"),orderBy("date","desc"),limit(5));
+  const querySnapshot=await getDocs(q);
+  querySnapshot.forEach(docSnap=>{
+    const data=docSnap.data();
+    const div=document.createElement("div");
+    let color="black", label="";
+    if(data.type==="Funding"){ color="green"; label="Added"; }
+    else if(data.type==="Airtime Purchase"){ color="red"; label="Bought Airtime"; }
+    else if(data.type==="Data Purchase"){ color="blue"; label="Bought Data"; }
+    else if(data.type==="Sent Money"){ color="red"; label="Sent To"; }
+    else if(data.type==="Received Money"){ color="green"; label="Received From"; }
+    const date=new Date(data.date.seconds*1000).toLocaleString();
+    div.textContent=(data.type==="Sent Money"||data.type==="Received Money")?`${label} ${data.otherUser||"user"}: ₦${data.amount} | ${date}`:`${label}: ₦${data.amount} | ${date}`;
+    div.style.color=color; div.style.padding="5px"; div.style.borderBottom="1px solid #ddd";
+    historyEl.appendChild(div);
+  });
+}
+
+document.getElementById("fundBtn").addEventListener("click",async()=>{
+  const amt=parseInt(amountInput.value);
+  if(!amt||amt<=0){alert("Enter valid amount");return;}
+  const userDoc=doc(db,"users",currentUser.uid);
+  await updateDoc(userDoc,{balance:increment(amt)});
+  await addDoc(collection(db,"users",currentUser.uid,"transactions"),{type:"Funding",amount:amt,date:new Date()});
+  amountInput.value=""; loadBalance(); loadHistory();
+});
+
+document.getElementById("airtimeBtn").addEventListener("click",async()=>{
+  const amt=parseInt(amountInput.value);
+  if(!amt||amt<=0){alert("Enter valid amount");return;}
+  const userDoc=doc(db,"users",currentUser.uid);
+  const snap=await getDoc(userDoc);
+  if(snap.data().balance<amt){alert("Insufficient balance");return;}
+  await updateDoc(userDoc,{balance:increment(-amt)});
+  await addDoc(collection(db,"users",currentUser.uid,"transactions"),{type:"Airtime Purchase",amount:amt,date:new Date()});
+  amountInput.value=""; loadBalance(); loadHistory();
+});
+
+document.getElementById("dataBtn").addEventListener("click",async()=>{
+  const amt=parseInt(amountInput.value);
+  if(!amt||amt<=0){alert("Enter valid amount");return;}
+  const userDoc=doc(db,"users",currentUser.uid);
+  const snap=await getDoc(userDoc);
+  if(snap.data().balance<amt){alert("Insufficient balance");return;}
+  await updateDoc(userDoc,{balance:increment(-amt)});
+  await addDoc(collection(db,"users",currentUser.uid,"transactions"),{type:"Data Purchase",amount:amt,date:new Date()});
+  amountInput.value=""; loadBalance(); loadHistory();
+  alert(`✅ ₦${amt} used to buy data`);
+});
+
+document.getElementById("sendBtn").addEventListener("click",async()=>{
+  const amt=parseInt(amountInput.value);
+  const email=receiverEmail.value.trim();
+  if(!amt||amt<=0){alert("Enter valid amount");return;}
+  if(!email){alert("Enter receiver email");return;}
+  if(email===currentUser.email){alert("Cannot send to yourself");return;}
+  const usersRef=collection(db,"users");
+  const qRef=query(usersRef,where("email","==",email));
+  const querySnapshot=await getDocs(qRef);
+  if(querySnapshot.empty){alert("Receiver not found");return;}
+  const receiverDoc=querySnapshot.docs[0]; const receiverUID=receiverDoc.id;
+  const senderDoc=doc(db,"users",currentUser.uid);
+  const senderSnap=await getDoc(senderDoc);
+  if(senderSnap.data().balance<amt){alert("Insufficient balance");return;}
+  await updateDoc(senderDoc,{balance:increment(-amt)});
+  await addDoc(collection(db,"users",currentUser.uid,"transactions"),{type:"Sent Money",amount:amt,date:new Date(),otherUser:email});
+  const receiverDocRef=doc(db,"users",receiverUID);
+  await updateDoc(receiverDocRef,{balance:increment(amt)});
+  await addDoc(collection(db,"users",receiverUID,"transactions"),{type:"Received Money",amount:amt,date:new Date(),otherUser:currentUser.email});
+  amountInput.value=""; receiverEmail.value=""; loadBalance(); loadHistory();
+  alert(`₦${amt} sent to ${email}`);
+});
+
+document.getElementById("resendVerifyBtn").addEventListener("click",async()=>{
+  if(currentUser && !currentUser.emailVerified){ await sendEmailVerification(currentUser); alert("✅ Verification email resent!"); }
+});
+
+document.getElementById("logoutBtn").addEventListener("click",()=>{ signOut(auth).then(()=>window.location.href="index.html"); });
+</script>
+</body>
+</html>
